@@ -45,6 +45,31 @@
             display: block;
         }
 
+        .card:active {
+            transform: scale(0.98);
+        }
+
+        .secondary-btn {
+            display: block;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--hint-color);
+            text-align: center;
+            padding: 12px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            border: 1px solid var(--card-border);
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+
+        .secondary-btn:active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -193,6 +218,7 @@
             <h2 class="task-title" id="tTitle">Fetching...</h2>
             <p class="task-desc" id="tDesc">...</p>
             <a href="#" class="resource-btn" id="tResource" target="_blank">🔗 Open Resource</a>
+            <a href="#" class="secondary-btn" id="tSearch" target="_blank">🔍 Search for this Topic</a>
             <div class="why-next" id="tWhy">...</div>
             <button class="done-btn" id="doneBtn" onclick="completeTask()">Task Completed</button>
             <div id="lockNotice" class="lock-notice">Growth takes time. Focus on your current task for today.</div>
@@ -271,6 +297,10 @@
                 btn.href = task.resource;
                 btn.style.display = 'block';
             } else { btn.style.display = 'none'; }
+
+            // 🛡️ Search Safety Net
+            const searchBtn = document.getElementById('tSearch');
+            searchBtn.href = `https://www.google.com/search?q=${encodeURIComponent(task.title + " " + task.pillar)}`;
 
             const doneBtn = document.getElementById('doneBtn');
             const lockNotice = document.getElementById('lockNotice');
