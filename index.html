@@ -309,8 +309,48 @@
             try {
                 const res = await fetch(`${WEB_APP_URL}?action=progress&userId=${user.id}`);
                 const data = await res.json();
+                
                 document.getElementById('pTotal').innerText = data.total;
                 document.getElementById('pStreak').innerText = data.streak;
+
+                // 📊 Render Pillar Bars
+                const pillarContainer = document.getElementById('pillarStats');
+                pillarContainer.innerHTML = '<h3 style="margin: 0 0 16px 0; font-size: 16px; color: var(--text-color);">Growth Pillars</h3>';
+                
+                const total = data.total || 1;
+                for (const [name, count] of Object.entries(data.pillars)) {
+                    const percent = Math.max(5, Math.round((count / total) * 100));
+                    const row = document.createElement('div');
+                    row.style.marginBottom = '15px';
+                    row.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: var(--hint-color);">
+                            <span>${icons[name] || ''} ${name}</span>
+                            <span>${count} tasks</span>
+                        </div>
+                        <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
+                            <div style="width: ${percent}%; height: 100%; background: var(--accent-color); border-radius: 10px; box-shadow: 0 0 10px var(--accent-color); transition: width 1s ease;"></div>
+                        </div>
+                    `;
+                    pillarContainer.appendChild(row);
+                }
+
+                // 📜 Render Recent History
+                if (data.history && data.history.length > 0) {
+                    const histHeader = document.createElement('h3');
+                    histHeader.style.cssText = "margin: 25px 0 15px 0; font-size: 16px; color: var(--text-color);";
+                    histHeader.innerText = "Recent Wins";
+                    pillarContainer.appendChild(histHeader);
+
+                    data.history.forEach(item => {
+                        const hRow = document.createElement('div');
+                        hRow.style.cssText = "background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05);";
+                        hRow.innerHTML = `
+                            <div style="font-size: 14px; font-weight: 600;">${item.title}</div>
+                            <div style="font-size: 11px; color: var(--hint-color); margin-top: 4px;">${icons[item.pillar]} ${item.pillar} • ${new Date(item.dateCompleted).toLocaleDateString()}</div>
+                        `;
+                        pillarContainer.appendChild(hRow);
+                    });
+                }
             } catch (e) { console.error(e); }
         }
 

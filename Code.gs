@@ -3,27 +3,34 @@ const SHEET_ID = '1dYzU7SBxal9jE4gqhoZyXoBM4wFxtVU1Z2wzm2O1PZo';
 const GEMINI_API_KEY = 'AIzaSyCZWVJ3bdgtlWnqSJyiHIFEZcqAELYV9';
 const MINI_APP_URL = 'https://self-improvment.vercel.app'; 
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${BOT_TOKEN}`;
-const TEST_MODE = true; // 🛠️ Set to false to enable the 24h lock for users
+const TEST_MODE = false; // 🔒 24h Lock is now ACTIVE
 
 function doPost(e) {
   try {
     if (e.postData && e.postData.contents) {
       const contents = JSON.parse(e.postData.contents);
       
-      // 🛡️ DEDUPLICATION: Stop Telegram from retrying if the AI is slow
-      if (contents.update_id) {
-        if (isDuplicateUpdate(contents.update_id)) {
-          return ContentService.createTextOutput('OK');
-        }
+      if (contents.update_id && isDuplicateUpdate(contents.update_id)) {
+        return ContentService.createTextOutput('OK');
       }
 
       if (contents.message) {
-        handleTelegramMessage(contents.message);
+        // 🕒 IGNORE OLD MESSAGES: Stop loops from the past
+        const now = Math.floor(Date.now() / 1000);
+        if (contents.message.date && (now - contents.message.date > 120)) {
+          return ContentService.createTextOutput('OK');
+        }
+        
+        try {
+          handleTelegramMessage(contents.message);
+        } catch (msgErr) {
+          Logger.log("Message Handler Error: " + msgErr.toString());
+        }
         return ContentService.createTextOutput('OK');
       }
     }
   } catch (error) {
-    Logger.log("doPost Error: " + error.toString());
+    Logger.log("doPost Root Error: " + error.toString());
   }
 
   const action = e.parameter.action;
