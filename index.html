@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Growth App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            /* Telegram Theme Variables with Fallbacks */
+            --bg-color: var(--tg-theme-bg-color, #0f172a);
+            --text-color: var(--tg-theme-text-color, #f8fafc);
+            --hint-color: var(--tg-theme-hint-color, #94a3b8);
+            --accent-color: var(--tg-theme-button-color, #10b981);
+            --accent-text: var(--tg-theme-button-text-color, #ffffff);
+
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Views */
+        .view {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 90px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Top Bar */
+        .header {
+            text-align: center;
+            padding: 20px 0 10px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-color), var(--hint-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Task Card */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 24px;
+            margin-top: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .card:active {
+            transform: scale(0.98);
+        }
+
+        .badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge.pillar {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+        }
+
+        .task-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            line-height: 1.3;
+        }
+
+        .task-desc {
+            font-size: 15px;
+            color: var(--hint-color);
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .resource-btn {
+            display: block;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            text-align: center;
+            padding: 14px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border: 1px solid var(--card-border);
+            box-sizing: border-box;
+            transition: background 0.2s;
+        }
+
+        .resource-btn:active {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .why-next {
+            font-size: 13px;
+            font-style: italic;
+            color: var(--hint-color);
+            border-left: 3px solid var(--accent-color);
+            padding-left: 10px;
+            margin-bottom: 30px;
+        }
+
+        .done-btn {
+            width: 100%;
+            background: var(--accent-color);
+            color: var(--accent-text);
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            transition: all 0.2s;
+        }
+
+        .done-btn:active {
+            transform: scale(0.96);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+        }
+
+        /* Progress View */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 16px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text-color);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--hint-color);
+        }
+
+        .pillar-bars {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 20px;
+            border-radius: 16px;
+        }
+
+        .pillar-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .pillar-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .p-name {
+            width: 100px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .p-bar-bg {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin: 0 10px;
+            overflow: hidden;
+        }
+
+        .p-bar-fill {
+            height: 100%;
+            background: var(--accent-color);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 1s ease;
+        }
+
+        .p-count {
+            width: 20px;
+            font-size: 13px;
+            text-align: right;
+            color: var(--hint-color);
+        }
+
+        /* Bottom Nav */
+        .nav {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            display: flex;
+            padding: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            border-radius: 18px;
+            color: var(--hint-color);
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+        }
+
+        /* Loading State */
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .loading.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Loading Screen -->
+    <div id="loader" class="loading show">
+        <div class="spinner"></div>
+        <div style="color: var(--hint-color); font-weight: 500;" id="loadText">Syncing your journey...</div>
+    </div>
+
+    <!-- Home View -->
+    <div id="view-home" class="view active">
+        <div class="header">
+            <h1>Current Task</h1>
+        </div>
+        <div class="card" id="taskCard">
+            <div class="badges">
+                <div class="badge pillar" id="tPillar">📌 Loading</div>
+                <div class="badge" id="tType">🔹 Loading</div>
+            </div>
+            <h2 class="task-title" id="tTitle">Generating...</h2>
+            <p class="task-desc" id="tDesc">Please wait while we fetch your personalized task.</p>
+
+            <a href="#" class="resource-btn" id="tResource" target="_blank">🔗 Open Resource</a>
+
+            <div class="why-next" id="tWhy">Analyzing your history...</div>
+
+            <button class="done-btn" onclick="markDone()">✅ Task Completed</button>
+        </div>
+    </div>
+
+    <!-- Progress View -->
+    <div id="view-progress" class="view">
+        <div class="header">
+            <h1>Your Growth</h1>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="pTotal">0</div>
+                <div class="stat-label">Tasks Done</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pStreak">0</div>
+                <div class="stat-label">Day Streak 🔥</div>
+            </div>
+        </div>
+
+        <div class="pillar-bars">
+            <h3 style="margin: 0 0 16px 0; font-size: 16px;">Distribution</h3>
+
+            <div class="pillar-row">
+                <div class="p-name">📣 Marketing</div>
+                <div class="p-bar-bg">
+                    <div class="p-bar-fill" id="bar-Marketing"></div>
+                </div>
+                <div class="p-count" id="cnt-Marketing">0</div>
+            </div>
+            <div class="pillar-row">
+                <div class="p-name">🧠 Thinking</div>
+                <div class="p-bar-bg">
+                    <div class="p-bar-fill" id="bar-Thinking"></div>
+                </div>
+                <div class="p-count" id="cnt-Thinking">0</div>
+            </div>
+            <div class="pillar-row">
+                <div class="p-name">💪 Discipline</div>
+                <div class="p-bar-bg">
+                    <div class="p-bar-fill" id="bar-Discipline"></div>
+                </div>
+                <div class="p-count" id="cnt-Discipline">0</div>
+            </div>
+            <div class="pillar-row">
+                <div class="p-name">🌿 Self-Growth</div>
+                <div class="p-bar-bg">
+                    <div class="p-bar-fill" id="bar-Self-Growth"></div>
+                </div>
+                <div class="p-count" id="cnt-Self-Growth">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <div class="nav-item active" onclick="switchTab('home')" id="nav-home">🏠 Home</div>
+        <div class="nav-item" onclick="switchTab('progress')" id="nav-progress">📊 Progress</div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 🔴 IMPORTANT: PASTE YOUR APPS SCRIPT WEB APP URL HERE AFTER DEPLOYMENT
+        // =========================================================================
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxq8z0eil7TGCi9PVfNzGIzagGbp0ctUkksOe0z1J7fTnhVNGjPLntTi9t_6u-1h-TYLg/exec";
+
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Expand to full height
+        tg.ready();
+
+        const user = tg.initDataUnsafe?.user || { id: "123456", username: "DemoUser" }; // Fallback for testing out of Telegram
+
+        const icons = {
+            "Marketing": "📣", "Thinking": "🧠", "Discipline": "💪", "Self-Growth": "🌿",
+            "Read": "📖", "Listen": "🎧", "Watch": "📺", "Do": "✍️"
+        };
+
+        // UI Helpers
+        function showLoader(text) {
+            document.getElementById('loadText').innerText = text;
+            document.getElementById('loader').classList.add('show');
+        }
+        function hideLoader() {
+            document.getElementById('loader').classList.remove('show');
+        }
+
+        // Navigation
+        function switchTab(tab) {
+            tg.HapticFeedback.selectionChanged();
+
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(`view-${tab}`).classList.add('active');
+            document.getElementById(`nav-${tab}`).classList.add('active');
+
+            if (tab === 'progress') {
+                loadProgress();
+            }
+        }
+
+        // Fetch Current Task
+        async function loadTask() {
+            try {
+                if (WEB_APP_URL.includes("REPLACE_ME")) {
+                    document.getElementById('tTitle').innerText = "Deployment Required";
+                    document.getElementById('tDesc').innerText = "Please replace WEB_APP_URL in index.html with your Google Apps Script Web App URL.";
+                    hideLoader();
+                    return;
+                }
+
+                showLoader("Fetching your task...");
+                const res = await fetch(`${WEB_APP_URL}?action=getTask&userId=${user.id}&username=${user.username || 'User'}`);
+                const task = await res.json();
+
+                renderTask(task);
+                hideLoader();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('tTitle').innerText = "Connection Error";
+                document.getElementById('tDesc').innerText = "Could not connect to the backend. Please try again.";
+                hideLoader();
+            }
+        }
+
+        function renderTask(task) {
+            document.getElementById('tPillar').innerHTML = `${icons[task.pillar] || '📌'} ${task.pillar}`;
+            document.getElementById('tType').innerHTML = `${icons[task.type] || '🔹'} ${task.type}`;
+            document.getElementById('tTitle').innerText = task.title;
+            document.getElementById('tDesc').innerText = task.description;
+            document.getElementById('tWhy').innerText = task.whyNext;
+
+            const btn = document.getElementById('tResource');
+            if (task.resource && task.resource.startsWith('http')) {
+                btn.href = task.resource;
+                btn.innerText = `🔗 Open Resource`;
+                btn.style.display = 'block';
+            } else if (task.resource) {
+                btn.href = `https://www.google.com/search?q=${encodeURIComponent(task.resource)}`;
+                btn.innerText = `🔍 Search: ${task.resource}`;
+                btn.style.display = 'block';
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        // Mark Task Done
+        async function markDone() {
+            tg.HapticFeedback.notificationOccurred('success');
+
+            // Celebration animation
+            document.getElementById('taskCard').style.transform = 'scale(0.9)';
+            document.getElementById('taskCard').style.opacity = '0';
+
+            setTimeout(async () => {
+                showLoader("AI is researching your next step...");
+                document.getElementById('taskCard').style.transform = 'scale(1)';
+
+                try {
+                    const res = await fetch(`${WEB_APP_URL}?action=done&userId=${user.id}&username=${user.username || 'User'}`, {
+                        method: 'POST'
+                    });
+                    const nextTask = await res.json();
+                    renderTask(nextTask);
+
+                    document.getElementById('taskCard').style.opacity = '1';
+                    hideLoader();
+                    tg.HapticFeedback.notificationOccurred('success');
+                } catch (err) {
+                    console.error(err);
+                    alert("Failed to sync completion. Please try again.");
+                    document.getElementById('taskCard').style.opacity = '1';
+                    hideLoader();
+                }
+            }, 300);
+        }
+
+        // Fetch Progress
+        async function loadProgress() {
+            try {
+                const res = await fetch(`${WEB_APP_URL}?action=progress&userId=${user.id}`);
+                const data = await res.json();
+
+                document.getElementById('pTotal').innerText = data.total;
+                document.getElementById('pStreak').innerText = data.streak;
+
+                const total = data.total || 1; // Prevent divide by zero
+
+                ['Marketing', 'Thinking', 'Discipline', 'Self-Growth'].forEach(p => {
+                    const count = data.pillars[p] || 0;
+                    document.getElementById(`cnt-${p}`).innerText = count;
+                    const percent = Math.round((count / total) * 100);
+                    // Add slight delay for animation
+                    setTimeout(() => {
+                        document.getElementById(`bar-${p}`).style.width = `${percent}%`;
+                    }, 100);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Initial Load
+        window.onload = () => {
+            loadTask();
+        };
+
+    </script>
+</body>
+
+</html>
